@@ -6,6 +6,11 @@ v0.1.6g
 1. support pipe mode
 2. support error code return
 
+v0.1.7
+------
+
+1. fixed the bug with generator -- issue `#12 <https://github.com/moskytw/clime/issues/12>`_.
+
 v0.1.6
 ------
 
