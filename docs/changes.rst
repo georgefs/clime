@@ -1,6 +1,10 @@
 
 The Changes
 ===========
+v0.1.6g
+-----
+1. support pipe mode
+2. support error code return
 
 v0.1.6
 ------
