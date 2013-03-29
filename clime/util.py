@@ -4,6 +4,8 @@
 '''It contains the helper functions.'''
 
 import inspect
+import sys
+import select
 
 def json(s):
     '''Convert a JSON string `s` into a Python's type.'''
@@ -62,3 +64,6 @@ def getargspec(func):
     defaultcount = len([d for d in defaultpart.split(',') if d.strip('[]')])
 
     return (args, None, None, (None,) * defaultcount or None)
+
+def has_stdin():
+    return select.select([sys.stdin,],[],[],0.0)[0]

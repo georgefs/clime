@@ -337,14 +337,14 @@ class Command(object):
 
         # cast the pos args
         for i, parg in enumerate(pargs):
-            if i < len(self.arg_names):
+           if i < len(self.arg_names):
                 pargs[i] = self.cast(self.arg_names[i], parg)
-            elif self.vararg_name:
+           elif self.vararg_name:
                 pargs[i] = self.cast(self.vararg_name, parg)
 
         return (pargs, kargs)
 
-    def execute(self, raw_args=None):
+    def execute(self, raw_args=None, stdin=False):
         '''Execute this command with `raw_args`.
 
         :param raw_args: The raw arguments from CLI.
@@ -352,8 +352,25 @@ class Command(object):
         :rtype: any
         '''
 
+
         pargs, kargs = self.parse(raw_args)
         return self.func(*pargs, **kargs)
+
+    def pipe(self, raw_args=[]):
+        for line in sys.stdin.readlines():
+            add_args = line.rstrip().split()
+            args = raw_args + add_args
+
+            pargs, kargs = self.parse(args)
+            result =  self.func(*pargs, **kargs)
+            if not inspect.isgenerator(result):
+                yield result
+                
+            else:
+                for result_split in result:
+                    yield result_split
+
+
 
     def get_usage(self, without_name=False):
         '''Return the usage of this command.
@@ -460,6 +477,8 @@ class Program(object):
         if not white_list and hasattr(obj, '__all__'):
             white_list = obj.__all__
 
+        self.pipe_list = getattr(obj, '__pipe__', [])
+
         tests = (inspect.isbuiltin, inspect.isfunction, inspect.ismethod)
 
         self.command_funcs = {}
@@ -530,7 +549,10 @@ class Program(object):
 
         try:
             # execute the command with the raw arguments.
-            return_val = cmd.execute(raw_args)
+            if cmd_func.__name__ in self.pipe_list and has_stdin():
+                return_val = cmd.pipe(raw_args)
+            else:
+                return_val = cmd.execute(raw_args)
         except Exception, e:
             if self.debug:
                 from traceback import print_exception
@@ -542,7 +564,7 @@ class Program(object):
 
         if not self.ignore_return and return_val is not None:
             if inspect.isgenerator(return_val):
-                for return_val in return_val:
+                for result in return_val:
                     print result
             else:
                 print return_val
