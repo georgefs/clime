@@ -138,3 +138,77 @@ You have two different ways to use Clime.
 
 If you want to know how to customize the program, read `Program
 <http://clime.mosky.tw/api.html#clime.core.Program>`_ for more infomation.
+
+Changed
+-----------
+add pipe mode
+
+1. **pipe example**
+
+file repeat.py 
+::
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+
+    def repeat(message, times=2, count=False):
+        '''It repeats the message.
+
+        options:
+            -m=<str>, --message=<str>  The message you want to repeat.
+            -t=<int>, --times=<int>    How many times?
+            -c, --count                Count it?
+        '''
+
+        s = message * times
+        return len(s) if count else s
+
+
+    __pipe__ = ['repeat']
+    if __name__ == '__main__':
+        import clime.now
+
+
+file data
+::
+   1
+   2
+   3
+   4
+   5
+
+
+command
+::
+   cat data | python repeat.py -t=3 
+
+result
+::
+   111
+   222
+   333
+   444
+   555
+
+file data2
+::
+   -t1 1
+   -t2 2
+   -t3 3
+   -t4 t
+   -t5 5
+
+command
+::
+   cat data2 | python repeat.py
+
+resutl
+::
+   1
+   22
+   333
+   4444
+   55555
+
+it's very simple to change clime to use stdin ~
+
+
