@@ -3,7 +3,7 @@
 
 __all__ = ['customize', 'Program', 'Command']
 
-import sys
+import sys, shlex
 import inspect
 import re
 from collections import defaultdict
@@ -356,9 +356,15 @@ class Command(object):
         pargs, kargs = self.parse(raw_args)
         return self.func(*pargs, **kargs)
 
-    def pipe(self, raw_args=[]):
+    def pipe(self, raw_args=[], raw=True):
         for line in sys.stdin.readlines():
-            add_args = line.rstrip().split()
+            line = line.rstrip()
+
+            if raw:
+                add_args = [line]
+            else:
+                add_args = shlex.split(line)
+
             args = raw_args + add_args
 
             pargs, kargs = self.parse(args)
@@ -478,6 +484,7 @@ class Program(object):
             white_list = obj.__all__
 
         self.pipe_list = getattr(obj, '__pipe__', [])
+        self.split_piple_list = getattr(obj, '__split_pipe__', [])
 
         tests = (inspect.isbuiltin, inspect.isfunction, inspect.ismethod)
 
@@ -549,8 +556,12 @@ class Program(object):
 
         try:
             # execute the command with the raw arguments.
-            if cmd_func.__name__ in self.pipe_list and has_stdin():
-                return_val = cmd.pipe(raw_args)
+            if  has_stdin():
+                if cmd_func.__name__ in self.split_piple_list:
+                    return_val = cmd.pipe(raw_args, raw=False)
+                elif cmd_func.__name__ in self.piple_list:
+                    return_val = cmd.pipe(raw_args)
+                
             else:
                 return_val = cmd.execute(raw_args)
         except Exception, e:
@@ -566,8 +577,9 @@ class Program(object):
             if inspect.isgenerator(return_val):
 
                 for i in return_val:
-                    print i
-            else:
+                    if i is not None:
+                        print i
+            else:   
                 print return_val
 
     def print_usage(self, cmd_name=None):
